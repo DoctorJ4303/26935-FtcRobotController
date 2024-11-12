@@ -19,12 +19,12 @@ public class DriveMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        frontRight = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontLeft = hardwareMap.get(DcMotor.class, "frontRight");
-        backRight = hardwareMap.get(DcMotor.class, "backLeft");
-        backLeft = hardwareMap.get(DcMotor.class, "backRight");
+        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
+        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+        backRight = hardwareMap.get(DcMotor.class, "backRight");
+        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
 
-
+        waitForStart();
 
 
         while(opModeIsActive()) {
