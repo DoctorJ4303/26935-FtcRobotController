@@ -3,11 +3,13 @@ package net.emhs.ftc.teamcode.OpModes.basic;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight, arm;
+    private Servo claw;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
     public double speed = 1;
@@ -56,7 +58,14 @@ public class DriveMode extends LinearOpMode {
             // Y button preset
         }
 
-
+        // All claw motion here
+        if (gamepad2.right_trigger != 0) {
+            double currentPos = claw.getPosition();
+            claw.setPosition(currentPos - 0.01);
+        } else if (gamepad2.left_trigger != 0) {
+            double currentPos = claw.getPosition();
+            claw.setPosition(currentPos + 0.01);
+        }
     }
 
     private void updateVariables() {
