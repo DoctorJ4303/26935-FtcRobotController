@@ -1,5 +1,7 @@
 package net.emhs.ftc.teamcode.OpModes.basic;
 
+import android.service.voice.AlwaysOnHotwordDetector;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -54,8 +56,11 @@ public class AutonomousMode extends LinearOpMode {
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
-        while (opModeIsActive()) {
-
+        while (opModeIsActive() && frontRight.getCurrentPosition() < 20000) {
+            frontRight.setPower(-1);
+            backRight.setPower(1);
+            frontLeft.setPower(1);
+            backLeft.setPower(-1);
         }
     }
 }
