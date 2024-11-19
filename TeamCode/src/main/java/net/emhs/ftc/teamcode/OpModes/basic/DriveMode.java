@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight, arm;
-    private Servo claw;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift;
+    private Servo claw, armL, armR, elbowL, elbowR;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
     public double speed = 1;
@@ -25,7 +25,7 @@ public class DriveMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        setUpMotors();
+        setUpDcMotors();
 
         waitForStart();
 
@@ -45,8 +45,8 @@ public class DriveMode extends LinearOpMode {
 
         // All arm motion should be in this if statement to prevent conflicts
         if (rightY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
-            arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            arm.setPower(rightY2); // Manual arm control with right stick Y
+            armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            armLift.setPower(rightY2); // Manual arm control with right stick Y
         } else if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
@@ -65,6 +65,18 @@ public class DriveMode extends LinearOpMode {
         } else if (gamepad2.left_trigger != 0) {
             double currentPos = claw.getPosition();
             claw.setPosition(currentPos + 0.01);
+        }
+
+        // Arm motion
+        if (gamepad2.left_stick_y != 0) {
+            moveServo(armL, gamepad2.left_stick_y);
+            moveServo(armR, -gamepad2.left_stick_y);
+        }
+
+        // Elbow motion
+        if (gamepad2.left_stick_x != 0) {
+            moveServo(elbowL, gamepad2.left_stick_x);
+            moveServo(elbowR, -gamepad2.left_stick_x);
         }
     }
 
@@ -89,7 +101,7 @@ public class DriveMode extends LinearOpMode {
 
     }
 
-    private void setUpMotors() {
+    private void setUpDcMotors() {
 
         /*
         DC MOTORS:
@@ -101,10 +113,10 @@ public class DriveMode extends LinearOpMode {
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        arm = hardwareMap.get(DcMotor.class, "arm");
+        armLift = hardwareMap.get(DcMotor.class, "arm");
 
         DcMotor[] motors = { // Putting all DC Motors in an array allows for modifying each with a for loop
-             frontRight, frontLeft, backRight, backLeft, arm
+             frontRight, frontLeft, backRight, backLeft, armLift
         };
 
         for (DcMotor motor: motors) { // For each DC Motor in the array
@@ -116,7 +128,12 @@ public class DriveMode extends LinearOpMode {
     }
 
     private void runArmToPos (int pos) {
-        arm.setTargetPosition(pos);
-        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armLift.setTargetPosition(pos);
+        armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    }
+
+    private void moveServo (Servo servo, double rate) {
+        double pos = servo.getPosition();
+        servo.setPosition(pos + rate);
     }
 }
