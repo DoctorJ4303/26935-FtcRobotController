@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, brush;
     private Servo claw, armL, armR, elbowL, elbowR;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
@@ -26,6 +26,7 @@ public class DriveMode extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         setUpDcMotors();
+        setUpServos();
 
         waitForStart();
 
@@ -78,6 +79,13 @@ public class DriveMode extends LinearOpMode {
             moveServo(elbowL, gamepad2.left_stick_x);
             moveServo(elbowR, -gamepad2.left_stick_x);
         }
+
+        // Brush motion
+        if (gamepad2.right_bumper) {
+            brush.setPower(-1);
+        } else if (gamepad2.left_bumper) {
+            brush.setPower(1);
+        }
     }
 
     private void updateVariables() {
@@ -113,16 +121,29 @@ public class DriveMode extends LinearOpMode {
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        armLift = hardwareMap.get(DcMotor.class, "arm");
+        armLift = hardwareMap.get(DcMotor.class, "armLift");
+        brush = hardwareMap.get(DcMotor.class, "brush");
 
         DcMotor[] motors = { // Putting all DC Motors in an array allows for modifying each with a for loop
-             frontRight, frontLeft, backRight, backLeft, armLift
+             frontRight, frontLeft, backRight, backLeft, armLift, brush
         };
 
         for (DcMotor motor: motors) { // For each DC Motor in the array
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+
+
+    }
+
+    private void setUpServos() {
+        claw = hardwareMap.get(Servo.class, "claw");
+        armR = hardwareMap.get(Servo.class, "armR");
+        armL = hardwareMap.get(Servo.class, "armL");
+        elbowL = hardwareMap.get(Servo.class, "elbowL");
+        elbowR = hardwareMap.get(Servo.class, "elbowR");
+        elbowL.setPosition(.5);
+        elbowR.setPosition(.5);
 
 
     }
@@ -134,6 +155,7 @@ public class DriveMode extends LinearOpMode {
 
     private void moveServo (Servo servo, double rate) {
         double pos = servo.getPosition();
-        servo.setPosition(pos + rate);
+
+        servo.setPosition(Math.max(Math.min(pos + rate/200, 1), 0));
     }
 }
