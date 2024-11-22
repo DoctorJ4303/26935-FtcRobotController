@@ -61,11 +61,9 @@ public class DriveMode extends LinearOpMode {
 
         // All claw motion here
         if (gamepad2.right_trigger != 0) {
-            double currentPos = claw.getPosition();
-            claw.setPosition(currentPos - 0.01);
+            moveServo(claw, gamepad2.right_trigger);
         } else if (gamepad2.left_trigger != 0) {
-            double currentPos = claw.getPosition();
-            claw.setPosition(currentPos + 0.01);
+            moveServo(claw, -gamepad2.left_trigger);
         }
 
         // Arm motion
@@ -84,6 +82,8 @@ public class DriveMode extends LinearOpMode {
             brush.setPower(-1);
         } else if (gamepad2.left_bumper) {
             brush.setPower(1);
+        } else {
+            brush.setPower(0);
         }
     }
 
