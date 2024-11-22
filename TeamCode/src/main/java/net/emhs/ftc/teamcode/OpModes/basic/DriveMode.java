@@ -45,9 +45,9 @@ public class DriveMode extends LinearOpMode {
         backRight.setPower(((leftY1 - leftX1 - rightX1) / denominator)*speed);
 
         // All arm motion should be in this if statement to prevent conflicts
-        if (rightY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
+        if (gamepad2.right_stick_y != 0) { // Manual control takes priority (Controller 2, Right stick)
             armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            armLift.setPower(rightY2); // Manual arm control with right stick Y
+            armLift.setPower(gamepad2.right_stick_y); // Manual arm control with right stick Y
         } else if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
@@ -57,6 +57,8 @@ public class DriveMode extends LinearOpMode {
             // X button preset
         } else if (gamepad2.y) {
             // Y button preset
+        } else {
+            armLift.setPower(0);
         }
 
         // All claw motion here
@@ -69,6 +71,8 @@ public class DriveMode extends LinearOpMode {
         // Arm motion
         if (gamepad2.left_stick_y != 0) {
             shoulder.setPower(gamepad2.left_stick_y);
+        } else {
+            shoulder.setPower(0);
         }
 
         // Elbow motion
