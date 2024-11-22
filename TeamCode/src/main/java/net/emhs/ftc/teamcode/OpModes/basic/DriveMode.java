@@ -13,6 +13,8 @@ public class DriveMode extends LinearOpMode {
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
     public double speed = 1;
+    public int armSpeed = 5;
+
 
     // Change these values as needed
     // All are from zero to one
@@ -47,7 +49,7 @@ public class DriveMode extends LinearOpMode {
         // All arm motion should be in this if statement to prevent conflicts
         if (gamepad2.right_stick_y != 0) { // Manual control takes priority (Controller 2, Right stick)
             armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            armLift.setPower(gamepad2.right_stick_y); // Manual arm control with right stick Y
+            armLift.setPower(-gamepad2.right_stick_y);
         } else if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
@@ -58,7 +60,8 @@ public class DriveMode extends LinearOpMode {
         } else if (gamepad2.y) {
             // Y button preset
         } else {
-            armLift.setPower(0);
+            armLift.setTargetPosition(armLift.getCurrentPosition()); // Keeps the lift in place
+            armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         // All claw motion here
