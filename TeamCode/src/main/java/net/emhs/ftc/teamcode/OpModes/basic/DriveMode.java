@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, brush;
-    private Servo claw, armL, armR, elbowL, elbowR;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, brush, shoulder;
+    private Servo claw, elbowL, elbowR;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
     public double speed = 1;
@@ -70,8 +70,7 @@ public class DriveMode extends LinearOpMode {
 
         // Arm motion
         if (gamepad2.left_stick_y != 0) {
-            moveServo(armL, gamepad2.left_stick_y);
-            moveServo(armR, -gamepad2.left_stick_y);
+            shoulder.setPower(gamepad2.left_stick_y);
         }
 
         // Elbow motion
@@ -123,9 +122,10 @@ public class DriveMode extends LinearOpMode {
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         armLift = hardwareMap.get(DcMotor.class, "armLift");
         brush = hardwareMap.get(DcMotor.class, "brush");
+        shoulder = hardwareMap.get(DcMotor.class, "shoulder");
 
         DcMotor[] motors = { // Putting all DC Motors in an array allows for modifying each with a for loop
-             frontRight, frontLeft, backRight, backLeft, armLift, brush
+             frontRight, frontLeft, backRight, backLeft, armLift, brush, shoulder
         };
 
         for (DcMotor motor: motors) { // For each DC Motor in the array
@@ -138,14 +138,10 @@ public class DriveMode extends LinearOpMode {
 
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
-        armR = hardwareMap.get(Servo.class, "armR");
-        armL = hardwareMap.get(Servo.class, "armL");
         elbowL = hardwareMap.get(Servo.class, "elbowL");
         elbowR = hardwareMap.get(Servo.class, "elbowR");
         elbowL.setPosition(.5);
         elbowR.setPosition(.5);
-
-
     }
 
     private void runArmToPos (int pos) {
