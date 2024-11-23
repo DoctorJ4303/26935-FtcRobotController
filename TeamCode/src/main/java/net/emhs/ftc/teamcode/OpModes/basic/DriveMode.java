@@ -5,6 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
@@ -32,24 +35,154 @@ public class DriveMode extends LinearOpMode {
 
         waitForStart();
 
+        Telemetry telemetry = new Telemetry() {
+            @Override
+            public Item addData(String caption, String format, Object... args) {
+                return null;
+            }
+
+            @Override
+            public Item addData(String caption, Object value) {
+                return null;
+            }
+
+            @Override
+            public <T> Item addData(String caption, Func<T> valueProducer) {
+                return null;
+            }
+
+            @Override
+            public <T> Item addData(String caption, String format, Func<T> valueProducer) {
+                return null;
+            }
+
+            @Override
+            public boolean removeItem(Item item) {
+                return false;
+            }
+
+            @Override
+            public void clear() {
+
+            }
+
+            @Override
+            public void clearAll() {
+
+            }
+
+            @Override
+            public Object addAction(Runnable action) {
+                return null;
+            }
+
+            @Override
+            public boolean removeAction(Object token) {
+                return false;
+            }
+
+            @Override
+            public void speak(String text) {
+
+            }
+
+            @Override
+            public void speak(String text, String languageCode, String countryCode) {
+
+            }
+
+            @Override
+            public boolean update() {
+                return false;
+            }
+
+            @Override
+            public Line addLine() {
+                return null;
+            }
+
+            @Override
+            public Line addLine(String lineCaption) {
+                return null;
+            }
+
+            @Override
+            public boolean removeLine(Line line) {
+                return false;
+            }
+
+            @Override
+            public boolean isAutoClear() {
+                return false;
+            }
+
+            @Override
+            public void setAutoClear(boolean autoClear) {
+
+            }
+
+            @Override
+            public int getMsTransmissionInterval() {
+                return 0;
+            }
+
+            @Override
+            public void setMsTransmissionInterval(int msTransmissionInterval) {
+
+            }
+
+            @Override
+            public String getItemSeparator() {
+                return "";
+            }
+
+            @Override
+            public void setItemSeparator(String itemSeparator) {
+
+            }
+
+            @Override
+            public String getCaptionValueSeparator() {
+                return "";
+            }
+
+            @Override
+            public void setCaptionValueSeparator(String captionValueSeparator) {
+
+            }
+
+            @Override
+            public void setDisplayFormat(DisplayFormat displayFormat) {
+
+            }
+
+            @Override
+            public Log log() {
+                return null;
+            }
+        };
+
         while(opModeIsActive()) {
             updateVariables();
             updateMovement();
+
+            telemetry.addData("Arm Position: ", armLift.getCurrentPosition());
+            telemetry.update();
         }
     }
 
     public void updateMovement() {
         double denominator = Math.max(Math.abs(leftY1) + Math.abs(leftX1), 1);
 
-        frontLeft.setPower(-((leftY1 - leftX1 + rightX1) / denominator)*speed);
-        backLeft.setPower(-((leftY1 + leftX1 + rightX1) / denominator)*speed);
-        frontRight.setPower(((leftY1 + leftX1 - rightX1) / denominator)*speed);
-        backRight.setPower(((leftY1 - leftX1 - rightX1) / denominator)*speed);
+        frontLeft.setPower(-((-leftY1 + leftX1 - rightX1) / denominator)*speed);
+        backLeft.setPower(-((leftY1 + leftX1 - rightX1) / denominator)*speed);
+        frontRight.setPower(((leftY1 + leftX1 + rightX1) / denominator)*speed);
+        backRight.setPower(((-leftY1 + leftX1 + rightX1) / denominator)*speed);
 
         // All arm motion should be in this if statement to prevent conflicts
-        if (gamepad2.right_stick_y != 0) { // Manual control takes priority (Controller 2, Right stick)
+        if (rightY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
             armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            armLift.setPower(-gamepad2.right_stick_y);
+            armLift.setPower(rightY2);
         } else if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
@@ -71,17 +204,11 @@ public class DriveMode extends LinearOpMode {
             moveServo(claw, -gamepad2.left_trigger);
         }
 
-        // Arm motion
-        if (gamepad2.left_stick_y != 0) {
-            shoulder.setPower(gamepad2.left_stick_y);
+        // Shoulder motion
+        if (leftY2 != 0) {
+            shoulder.setPower(-leftY2);
         } else {
             shoulder.setPower(0);
-        }
-
-        // Elbow motion
-        if (gamepad2.left_stick_x != 0) {
-            moveServo(elbowL, gamepad2.left_stick_x);
-            moveServo(elbowR, -gamepad2.left_stick_x);
         }
 
         // Brush motion
@@ -99,10 +226,10 @@ public class DriveMode extends LinearOpMode {
         leftX1 = gamepad1.left_stick_x;
         rightY1 = gamepad1.right_stick_y;
         rightX1 = gamepad1.right_stick_x;
-        leftY2 = gamepad1.left_stick_y;
-        leftX2 = gamepad1.left_stick_x;
-        rightY2 = gamepad1.right_stick_y;
-        rightX2 = gamepad1.right_stick_x;
+        leftY2 = gamepad2.left_stick_y;
+        leftX2 = gamepad2.left_stick_x;
+        rightY2 = gamepad2.right_stick_y;
+        rightX2 = gamepad2.right_stick_x;
         rightTrigger1 = gamepad1.right_trigger;
         leftTrigger1 = gamepad1.left_trigger;
 
@@ -145,10 +272,6 @@ public class DriveMode extends LinearOpMode {
 
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
-        elbowL = hardwareMap.get(Servo.class, "elbowL");
-        elbowR = hardwareMap.get(Servo.class, "elbowR");
-        elbowL.setPosition(.5);
-        elbowR.setPosition(.5);
     }
 
     private void runArmToPos (int pos) {
