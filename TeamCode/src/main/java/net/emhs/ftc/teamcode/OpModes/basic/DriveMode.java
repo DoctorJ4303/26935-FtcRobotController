@@ -5,9 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
@@ -21,146 +18,19 @@ public class DriveMode extends LinearOpMode {
 
     // Change these values as needed
     // All are from zero to one
-    final double defaultSpeed = 0.75; // Speed when no analog triggers are pressed.
-    final double minSpeed = 0.20; // The minimum speed when slowing down using analog triggers. (Left trigger)
-    final double maxSpeed = 1.00; // The maximum speed when speeding up using analog triggers. (Right trigger)
+    final double defaultSpeed = 0.25; // Speed when no analog triggers are pressed.
+    final double minSpeed = 0.05; // The minimum speed when slowing down using analog triggers. (Left trigger)
+    final double maxSpeed = 0.80; // The maximum speed when speeding up using analog triggers. (Right trigger)
 
     final double armRaiseSpeed = 0.8; // The speed at which the arm is raised
     final double armLowerSpeed = 0.5;
 
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() {
         setUpDcMotors();
         setUpServos();
 
         waitForStart();
-
-        Telemetry telemetry = new Telemetry() {
-            @Override
-            public Item addData(String caption, String format, Object... args) {
-                return null;
-            }
-
-            @Override
-            public Item addData(String caption, Object value) {
-                return null;
-            }
-
-            @Override
-            public <T> Item addData(String caption, Func<T> valueProducer) {
-                return null;
-            }
-
-            @Override
-            public <T> Item addData(String caption, String format, Func<T> valueProducer) {
-                return null;
-            }
-
-            @Override
-            public boolean removeItem(Item item) {
-                return false;
-            }
-
-            @Override
-            public void clear() {
-
-            }
-
-            @Override
-            public void clearAll() {
-
-            }
-
-            @Override
-            public Object addAction(Runnable action) {
-                return null;
-            }
-
-            @Override
-            public boolean removeAction(Object token) {
-                return false;
-            }
-
-            @Override
-            public void speak(String text) {
-
-            }
-
-            @Override
-            public void speak(String text, String languageCode, String countryCode) {
-
-            }
-
-            @Override
-            public boolean update() {
-                return false;
-            }
-
-            @Override
-            public Line addLine() {
-                return null;
-            }
-
-            @Override
-            public Line addLine(String lineCaption) {
-                return null;
-            }
-
-            @Override
-            public boolean removeLine(Line line) {
-                return false;
-            }
-
-            @Override
-            public boolean isAutoClear() {
-                return false;
-            }
-
-            @Override
-            public void setAutoClear(boolean autoClear) {
-
-            }
-
-            @Override
-            public int getMsTransmissionInterval() {
-                return 0;
-            }
-
-            @Override
-            public void setMsTransmissionInterval(int msTransmissionInterval) {
-
-            }
-
-            @Override
-            public String getItemSeparator() {
-                return "";
-            }
-
-            @Override
-            public void setItemSeparator(String itemSeparator) {
-
-            }
-
-            @Override
-            public String getCaptionValueSeparator() {
-                return "";
-            }
-
-            @Override
-            public void setCaptionValueSeparator(String captionValueSeparator) {
-
-            }
-
-            @Override
-            public void setDisplayFormat(DisplayFormat displayFormat) {
-
-            }
-
-            @Override
-            public Log log() {
-                return null;
-            }
-        };
 
         while(opModeIsActive()) {
             updateVariables();
@@ -181,8 +51,9 @@ public class DriveMode extends LinearOpMode {
 
         // All arm motion should be in this if statement to prevent conflicts
         if (rightY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
+            // TODO: make it good
             armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            armLift.setPower(rightY2);
+            armLift.setPower(-rightY2);
         } else if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
@@ -193,21 +64,19 @@ public class DriveMode extends LinearOpMode {
         } else if (gamepad2.y) {
             // Y button preset
         } else {
-            armLift.setTargetPosition(armLift.getCurrentPosition()); // Keeps the lift in place
-            armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armLift.setPower(0);
         }
 
         // All claw motion here
-        if (gamepad2.right_trigger != 0) {
-            moveServo(claw, gamepad2.right_trigger);
-        } else if (gamepad2.left_trigger != 0) {
-            moveServo(claw, -gamepad2.left_trigger);
-        }
+        claw.setPosition((gamepad2.right_trigger != 0) ? 1 : 0);
 
         // Shoulder motion
-        if (leftY2 != 0) {
+        if (leftY2 < 0) {
             shoulder.setPower(-leftY2);
-        } else {
+        } else if (leftY2 > 0) { // Downward motion is at 10% of total possible speed
+            shoulder.setPower(-leftY2 * 10/100);
+        }
+        else {
             shoulder.setPower(0);
         }
 
@@ -234,6 +103,7 @@ public class DriveMode extends LinearOpMode {
         leftTrigger1 = gamepad1.left_trigger;
 
         speed = defaultSpeed + (rightTrigger1 * (maxSpeed - defaultSpeed)) - (leftTrigger1 * (defaultSpeed - minSpeed));
+        // TODO: Lower speed when arm is raised
         /*
         Takes the trigger value, normalizes it to the range between the min/max and the default
         so that it never goes over the max and under the min, adds the right trigger value and
@@ -267,11 +137,12 @@ public class DriveMode extends LinearOpMode {
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
-
+        armLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
+        claw.setPosition(0.20);
     }
 
     private void runArmToPos (int pos) {
