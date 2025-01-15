@@ -11,8 +11,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, brush, shoulder;
-    private Servo claw, wrist;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, brush, shoulder, slider;
+    private Servo claw, wrist, elbow1, elbow2, tilt;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
     public double speed = 1;
@@ -209,7 +209,26 @@ public class DriveMode extends LinearOpMode {
         } else if (gamepad2.left_trigger != 0){
             moveServo(wrist, -2);
         }
-
+        // Elbow swinging movement
+        if (gamepad2.left_stick_x > 0){
+            moveServo(elbow1, 1);
+            moveServo(elbow2, -1);
+        } else if (gamepad2.left_stick_x < 0){
+            moveServo(elbow1, -1);
+            moveServo(elbow2, 1);
+        }
+        // Slider movement
+        if (gamepad2.right_stick_y > 0){
+            slider.setPower(gamepad2.right_stick_y);
+        }else if (gamepad2.right_stick_y < 0){
+            slider.setPower(gamepad2.right_stick_y);
+        }
+        //tilt movement
+        if (gamepad2.right_stick_x > 0){
+            tilt.setPosition(1);
+        }else if(gamepad2.right_stick_x < 0){
+            tilt.setPosition(0);
+        }
         // Shoulder motion
         if (leftY2 != 0) {
             shoulder.setPower(-leftY2);
@@ -263,7 +282,7 @@ public class DriveMode extends LinearOpMode {
         shoulder = hardwareMap.get(DcMotor.class, "shoulder");
 
         DcMotor[] motors = { // Putting all DC Motors in an array allows for modifying each with a for loop
-             frontRight, frontLeft, backRight, backLeft, armLift, brush, shoulder
+             frontRight, frontLeft, backRight, backLeft, armLift, brush, shoulder, slider
         };
 
         for (DcMotor motor: motors) { // For each DC Motor in the array
@@ -277,6 +296,9 @@ public class DriveMode extends LinearOpMode {
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
         wrist = hardwareMap.get(Servo.class, "wrist");
+        elbow1 = hardwareMap.get(Servo.class, "elbow1");
+        elbow2 = hardwareMap.get(Servo.class, "elbow2");
+        tilt = hardwareMap.get(Servo.class, "tilt");
     }
 
     private void runArmToPos (int pos) {
