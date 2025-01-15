@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class DriveMode extends LinearOpMode {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, brush, shoulder;
-    private Servo claw, elbowL, elbowR;
+    private Servo claw, wrist;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
     public double speed = 1;
@@ -198,10 +198,16 @@ public class DriveMode extends LinearOpMode {
         }
 
         // All claw motion here
-        if (gamepad2.right_trigger != 0) {
-            moveServo(claw, gamepad2.right_trigger);
-        } else if (gamepad2.left_trigger != 0) {
-            moveServo(claw, -gamepad2.left_trigger);
+        if (gamepad2.left_bumper) {
+           claw.setPosition(1);
+        } else {
+            claw.setPosition(0);
+        }
+
+        if (gamepad2.right_trigger != 0){
+            moveServo(wrist, 2);
+        } else if (gamepad2.left_trigger != 0){
+            moveServo(wrist, -2);
         }
 
         // Shoulder motion
@@ -214,9 +220,7 @@ public class DriveMode extends LinearOpMode {
         // Brush motion
         if (gamepad2.right_bumper) {
             brush.setPower(-1);
-        } else if (gamepad2.left_bumper) {
-            brush.setPower(1);
-        } else {
+        }else{
             brush.setPower(0);
         }
     }
@@ -272,6 +276,7 @@ public class DriveMode extends LinearOpMode {
 
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
+        wrist = hardwareMap.get(Servo.class, "wrist")
     }
 
     private void runArmToPos (int pos) {
