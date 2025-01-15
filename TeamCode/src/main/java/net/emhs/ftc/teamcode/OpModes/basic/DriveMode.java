@@ -80,6 +80,12 @@ public class DriveMode extends LinearOpMode {
             shoulder.setPower(0);
         }
 
+        // Elbow motion
+        if (leftX2 != 0) {
+            moveServo(elbowL, leftX2);
+            moveServo(elbowR, -leftX2);
+        }
+
         // Brush motion
         if (gamepad2.right_bumper) {
             brush.setPower(-1);
@@ -142,6 +148,8 @@ public class DriveMode extends LinearOpMode {
 
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
+        elbowL = hardwareMap.get(Servo.class, "elbowL");
+        elbowR = hardwareMap.get(Servo.class, "elbowR");
         claw.setPosition(0.20);
     }
 
