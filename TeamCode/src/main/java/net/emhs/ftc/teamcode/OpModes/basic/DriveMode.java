@@ -276,7 +276,7 @@ public class DriveMode extends LinearOpMode {
 
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
-        wrist = hardwareMap.get(Servo.class, "wrist")
+        wrist = hardwareMap.get(Servo.class, "wrist");
     }
 
     private void runArmToPos (int pos) {
