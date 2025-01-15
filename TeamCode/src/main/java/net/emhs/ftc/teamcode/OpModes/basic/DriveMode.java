@@ -12,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, slider;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, armLift2, slider;
     private Servo claw, wrist, elbow1, elbow2, tilt, brush;
     private TouchSensor endStop;
 
@@ -59,6 +59,8 @@ public class DriveMode extends LinearOpMode {
         if (rightY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
             armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             armLift.setPower(rightY2);
+            armLift2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            armLift2.setPower(-rightY2);
         } else if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
@@ -71,6 +73,8 @@ public class DriveMode extends LinearOpMode {
         } else {
             armLift.setTargetPosition(armLift.getCurrentPosition()); // Keeps the lift in place
             armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armLift2.setTargetPosition(armLift2.getCurrentPosition());
+            armLift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         // All claw motion here
