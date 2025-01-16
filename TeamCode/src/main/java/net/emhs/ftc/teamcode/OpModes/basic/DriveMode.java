@@ -41,9 +41,6 @@ public class DriveMode extends LinearOpMode {
         while(opModeIsActive()) {
             updateVariables();
             updateMovement();
-
-            telemetry.addData("", endStop.isPressed() ? "UwU" : "Touch me daddy");
-            telemetry.update();
         }
     }
 
@@ -56,12 +53,14 @@ public class DriveMode extends LinearOpMode {
         backRight.setPower(((-leftY1 + leftX1 + rightX1) / denominator)*speed);
 
         // All arm motion should be in this if statement to prevent conflicts
-        if (rightY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
-            armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            armLift.setPower(rightY2);
-            armLift2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            armLift2.setPower(-rightY2);
-        } else if (gamepad2.a) {
+        if (leftY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
+            armLift.setPower(leftY2);
+            armLift2.setPower(-leftY2);
+        } else {
+            armLift.setPower(0);
+            armLift2.setPower(0);
+        }
+        if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
         } else if (gamepad2.b) {
@@ -70,12 +69,12 @@ public class DriveMode extends LinearOpMode {
             // X button preset
         } else if (gamepad2.y) {
             // Y button preset
-        } else {
+        }/* else {
             armLift.setTargetPosition(armLift.getCurrentPosition()); // Keeps the lift in place
             armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             armLift2.setTargetPosition(armLift2.getCurrentPosition());
             armLift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+        }*/
 
         // All claw motion here
         if (gamepad2.left_bumper) {
@@ -154,6 +153,9 @@ public class DriveMode extends LinearOpMode {
         armLift = hardwareMap.get(DcMotor.class, "armLift1");
         armLift = hardwareMap.get(DcMotor.class, "armLift2");
         slider = hardwareMap.get(DcMotor.class, "slider");
+
+        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
         DcMotor[] motors = { // Putting all DC Motors in an array allows for modifying each with a for loop
              frontRight, frontLeft, backRight, backLeft, armLift, slider
