@@ -2,14 +2,22 @@ package net.emhs.ftc.teamcode.OpModes.basic;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+
+import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, brush, shoulder;
-    private Servo claw, elbowL, elbowR;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift1, armLift2, slider;
+    private Servo claw, wrist, elbow1, elbow2, tilt;
+    private CRServo brush;
+    private TouchSensor endStop;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
     public double speed = 1;
@@ -18,26 +26,27 @@ public class DriveMode extends LinearOpMode {
 
     // Change these values as needed
     // All are from zero to one
-    final double defaultSpeed = 0.25; // Speed when no analog triggers are pressed.
-    final double minSpeed = 0.05; // The minimum speed when slowing down using analog triggers. (Left trigger)
-    final double maxSpeed = 0.80; // The maximum speed when speeding up using analog triggers. (Right trigger)
+    final double defaultSpeed = 0.75; // Speed when no analog triggers are pressed.
+    final double minSpeed = 0.20; // The minimum speed when slowing down using analog triggers. (Left trigger)
+    final double maxSpeed = 1.00; // The maximum speed when speeding up using analog triggers. (Right trigger)
 
     final double armRaiseSpeed = 0.8; // The speed at which the arm is raised
     final double armLowerSpeed = 0.5;
 
     @Override
-    public void runOpMode() {
+    public void runOpMode() throws InterruptedException {
+        endStop = hardwareMap.get(TouchSensor.class, "endStop");
         setUpDcMotors();
         setUpServos();
 
         waitForStart();
 
         while(opModeIsActive()) {
+            telemetry.addData("Slider Pos: ", slider.getCurrentPosition());
+            telemetry.update();
+
             updateVariables();
             updateMovement();
-
-            telemetry.addData("Arm Position: ", armLift.getCurrentPosition());
-            telemetry.update();
         }
     }
 
@@ -50,11 +59,14 @@ public class DriveMode extends LinearOpMode {
         backRight.setPower(((-leftY1 + leftX1 + rightX1) / denominator)*speed);
 
         // All arm motion should be in this if statement to prevent conflicts
-        if (rightY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
-            // TODO: make it good
-            armLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            armLift.setPower(-rightY2);
-        } else if (gamepad2.a) {
+        if (leftY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
+            armLift1.setPower(leftY2);
+            armLift2.setPower(-leftY2);
+        } else {
+            armLift1.setPower(0);
+            armLift2.setPower(0);
+        }
+        if (gamepad2.a) {
             // A button preset
             // runArmToPos(26935);
         } else if (gamepad2.b) {
@@ -63,35 +75,56 @@ public class DriveMode extends LinearOpMode {
             // X button preset
         } else if (gamepad2.y) {
             // Y button preset
-        } else {
-            armLift.setPower(0);
-        }
+        }/* else {
+            armLift.setTargetPosition(armLift.getCurrentPosition()); // Keeps the lift in place
+            armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armLift2.setTargetPosition(armLift2.getCurrentPosition());
+            armLift2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }*/
 
         // All claw motion here
-        claw.setPosition((gamepad2.right_trigger != 0) ? 1 : 0);
-
-        // Shoulder motion
-        if (leftY2 < 0) {
-            shoulder.setPower(-leftY2);
-        } else if (leftY2 > 0) { // Downward motion is at 10% of total possible speed
-            shoulder.setPower(-leftY2 * 10/100);
-        }
-        else {
-            shoulder.setPower(0);
+        if (gamepad2.left_bumper) {
+           claw.setPosition(1);
+        } else {
+            claw.setPosition(0);
         }
 
-        // Elbow motion
-        if (leftX2 != 0) {
-            moveServo(elbowL, leftX2);
-            moveServo(elbowR, -leftX2);
+        if (gamepad2.right_trigger != 0){
+            moveServo(wrist, 2);
+        } else if (gamepad2.left_trigger != 0){
+            moveServo(wrist, -2);
+        }
+        // Elbow swinging movement
+        if (gamepad2.left_stick_x > 0){
+            moveServo(elbow1, 1);
+            moveServo(elbow2, -1);
+        } else if (gamepad2.left_stick_x < 0){
+            moveServo(elbow1, -1);
+            moveServo(elbow2, 1);
+        }
+
+        // Slider movement
+        if (!(gamepad2.right_stick_y > 0)) {
+            slider.setTargetPosition(-(int)(gamepad2.right_stick_y*500));
+            slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            slider.setPower(1);
+        } else if (endStop.isPressed()) {
+            slider.setPower(0);
+            slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+
+        //tilt movement
+        if (gamepad2.right_stick_x > 0){
+            moveServo(tilt, 2);
+        }else if(gamepad2.right_stick_x < 0){
+            moveServo(tilt, -2);
         }
 
         // Brush motion
         if (gamepad2.right_bumper) {
-            brush.setPower(-1);
-        } else if (gamepad2.left_bumper) {
             brush.setPower(1);
-        } else {
+        }else{
             brush.setPower(0);
         }
     }
@@ -109,7 +142,6 @@ public class DriveMode extends LinearOpMode {
         leftTrigger1 = gamepad1.left_trigger;
 
         speed = defaultSpeed + (rightTrigger1 * (maxSpeed - defaultSpeed)) - (leftTrigger1 * (defaultSpeed - minSpeed));
-        // TODO: Lower speed when arm is raised
         /*
         Takes the trigger value, normalizes it to the range between the min/max and the default
         so that it never goes over the max and under the min, adds the right trigger value and
@@ -130,12 +162,12 @@ public class DriveMode extends LinearOpMode {
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        armLift = hardwareMap.get(DcMotor.class, "armLift");
-        brush = hardwareMap.get(DcMotor.class, "brush");
-        shoulder = hardwareMap.get(DcMotor.class, "shoulder");
+        armLift1 = hardwareMap.get(DcMotor.class, "armLift1");
+        armLift2 = hardwareMap.get(DcMotor.class, "armLift2");
+        slider = hardwareMap.get(DcMotor.class, "slider");
 
         DcMotor[] motors = { // Putting all DC Motors in an array allows for modifying each with a for loop
-             frontRight, frontLeft, backRight, backLeft, armLift, brush, shoulder
+             frontRight, frontLeft, backRight, backLeft, armLift1, armLift2, slider
         };
 
         for (DcMotor motor: motors) { // For each DC Motor in the array
@@ -143,19 +175,22 @@ public class DriveMode extends LinearOpMode {
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
-        armLift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        while (!endStop.isPressed()) {
+            slider.setPower(-.2);
+        }
+        slider.setPower(0);
+        slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     private void setUpServos() {
         claw = hardwareMap.get(Servo.class, "claw");
-        elbowL = hardwareMap.get(Servo.class, "elbowL");
-        elbowR = hardwareMap.get(Servo.class, "elbowR");
-        claw.setPosition(0.20);
-    }
+        wrist = hardwareMap.get(Servo.class, "wrist");
+        elbow1 = hardwareMap.get(Servo.class, "elbow1");
+        elbow2 = hardwareMap.get(Servo.class, "elbow2");
+        tilt = hardwareMap.get(Servo.class, "tilt");
+        brush = hardwareMap.get(CRServo.class, "brush");
 
-    private void runArmToPos (int pos) {
-        armLift.setTargetPosition(pos);
-        armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        brush.setDirection(CRServo.Direction.REVERSE);
     }
 
     private void moveServo (Servo servo, double rate) {
