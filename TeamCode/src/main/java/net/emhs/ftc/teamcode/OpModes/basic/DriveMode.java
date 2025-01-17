@@ -4,12 +4,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
-
-import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
@@ -34,7 +30,7 @@ public class DriveMode extends LinearOpMode {
     final double armLowerSpeed = 0.5;
 
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() {
         endStop = hardwareMap.get(TouchSensor.class, "endStop");
         setUpDcMotors();
         setUpServos();
@@ -60,8 +56,8 @@ public class DriveMode extends LinearOpMode {
 
         // All arm motion should be in this if statement to prevent conflicts
         if (leftY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
-            armLift1.setPower(leftY2);
-            armLift2.setPower(-leftY2);
+            armLift1.setPower(-leftY2);
+            armLift2.setPower(leftY2);
         } else {
             armLift1.setPower(0);
             armLift2.setPower(0);
@@ -104,7 +100,7 @@ public class DriveMode extends LinearOpMode {
         }
 
         // Slider movement
-        if (!(gamepad2.right_stick_y > 0)) {
+        if (gamepad2.right_stick_y < -0.1) {
             slider.setTargetPosition(-(int)(gamepad2.right_stick_y*500));
             slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             slider.setPower(1);
