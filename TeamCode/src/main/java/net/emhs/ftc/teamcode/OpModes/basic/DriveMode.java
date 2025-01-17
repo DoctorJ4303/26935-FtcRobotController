@@ -172,6 +172,10 @@ public class DriveMode extends LinearOpMode {
              frontRight, frontLeft, backRight, backLeft, armLift1, armLift2, slider
         };
 
+        DcMotor[] brakeMotors = { // These motors use brake zero power behavior to resist external forces
+                armLift1, armLift2 // Resist gravity
+        };
+
         for (DcMotor motor: motors) { // For each DC Motor in the array
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
