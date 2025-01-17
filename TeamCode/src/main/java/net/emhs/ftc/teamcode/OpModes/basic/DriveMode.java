@@ -100,14 +100,20 @@ public class DriveMode extends LinearOpMode {
         }
 
         // Slider movement
-        if (gamepad2.right_stick_y < -0.1) {
-            slider.setTargetPosition(-(int)(gamepad2.right_stick_y*500));
-            slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            slider.setPower(1);
-        } else if (endStop.isPressed()) {
-            slider.setPower(0);
+        if (endStop.isPressed()) { // Button is pressed
             slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            if (gamepad2.right_stick_y > 0.1) { // Button is pressed and joystick is POSITIVE
+                slider.setTargetPosition(-(int)(gamepad2.right_stick_y*500));
+                slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                slider.setPower(1);
+            }
+        } else if (Math.abs(gamepad2.right_stick_y) > 0.1) { // Joystick is active and button is not pressed
+            slider.setTargetPosition(-(int)(gamepad2.right_stick_y*500)); // Move according to joystick
+            slider.setMode(DcMotor.RunMode.RUN_TO_POSITION); // Go to previously set position
+            slider.setPower(1);
+        } else { // Joystick is inactive and button is not pressed
+            slider.setPower(0); // No movement
         }
 
         //tilt movement
