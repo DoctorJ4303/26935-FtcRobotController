@@ -2,7 +2,9 @@ package net.emhs.ftc.teamcode.OpModes.basic;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
@@ -12,8 +14,9 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @TeleOp(name = "Drive Mode", group = "default")
 public class DriveMode extends LinearOpMode {
 
-    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift, armLift2, slider;
-    private Servo claw, wrist, elbow1, elbow2, tilt, brush;
+    private DcMotor frontLeft, frontRight, backLeft, backRight, armLift1, armLift2, slider;
+    private Servo claw, wrist, elbow1, elbow2, tilt;
+    private CRServo brush;
     private TouchSensor endStop;
 
     double rightX1, rightY1, leftX1, leftY1, rightX2, rightY2, leftX2, leftY2, rightTrigger1, leftTrigger1, rightTrigger2, leftTrigger2;
@@ -32,13 +35,16 @@ public class DriveMode extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
+        endStop = hardwareMap.get(TouchSensor.class, "endStop");
         setUpDcMotors();
         setUpServos();
-        endStop = hardwareMap.get(TouchSensor.class, "endStop");
 
         waitForStart();
 
         while(opModeIsActive()) {
+            telemetry.addData("Slider Pos: ", slider.getCurrentPosition());
+            telemetry.update();
+
             updateVariables();
             updateMovement();
         }
@@ -54,10 +60,10 @@ public class DriveMode extends LinearOpMode {
 
         // All arm motion should be in this if statement to prevent conflicts
         if (leftY2 != 0) { // Manual control takes priority (Controller 2, Right stick)
-            armLift.setPower(leftY2);
+            armLift1.setPower(leftY2);
             armLift2.setPower(-leftY2);
         } else {
-            armLift.setPower(0);
+            armLift1.setPower(0);
             armLift2.setPower(0);
         }
         if (gamepad2.a) {
@@ -96,24 +102,30 @@ public class DriveMode extends LinearOpMode {
             moveServo(elbow1, -1);
             moveServo(elbow2, 1);
         }
+
         // Slider movement
-        if (gamepad2.right_stick_y > 0){
-            slider.setPower(gamepad2.right_stick_y*.1);
-        }else if (gamepad2.right_stick_y < 0){
-            slider.setPower(gamepad2.right_stick_y*.1);
+        if (!(gamepad2.right_stick_y > 0)) {
+            slider.setTargetPosition(-(int)(gamepad2.right_stick_y*500));
+            slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            slider.setPower(1);
+        } else if (endStop.isPressed()) {
+            slider.setPower(0);
+            slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+
         //tilt movement
         if (gamepad2.right_stick_x > 0){
-            tilt.setPosition(1);
+            moveServo(tilt, 2);
         }else if(gamepad2.right_stick_x < 0){
-            tilt.setPosition(0);
+            moveServo(tilt, -2);
         }
 
         // Brush motion
         if (gamepad2.right_bumper) {
-            brush.setPosition(-0.5);
+            brush.setPower(1);
         }else{
-            brush.setPosition(0);
+            brush.setPower(0);
         }
     }
 
@@ -150,15 +162,12 @@ public class DriveMode extends LinearOpMode {
         frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        armLift = hardwareMap.get(DcMotor.class, "armLift1");
-        armLift = hardwareMap.get(DcMotor.class, "armLift2");
+        armLift1 = hardwareMap.get(DcMotor.class, "armLift1");
+        armLift2 = hardwareMap.get(DcMotor.class, "armLift2");
         slider = hardwareMap.get(DcMotor.class, "slider");
 
-        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
         DcMotor[] motors = { // Putting all DC Motors in an array allows for modifying each with a for loop
-             frontRight, frontLeft, backRight, backLeft, armLift, slider
+             frontRight, frontLeft, backRight, backLeft, armLift1, armLift2, slider
         };
 
         for (DcMotor motor: motors) { // For each DC Motor in the array
@@ -166,7 +175,11 @@ public class DriveMode extends LinearOpMode {
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
-
+        while (!endStop.isPressed()) {
+            slider.setPower(-.2);
+        }
+        slider.setPower(0);
+        slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     private void setUpServos() {
@@ -175,12 +188,9 @@ public class DriveMode extends LinearOpMode {
         elbow1 = hardwareMap.get(Servo.class, "elbow1");
         elbow2 = hardwareMap.get(Servo.class, "elbow2");
         tilt = hardwareMap.get(Servo.class, "tilt");
-        brush = hardwareMap.get(Servo.class, "brush");
-    }
+        brush = hardwareMap.get(CRServo.class, "brush");
 
-    private void runArmToPos (int pos) {
-        armLift.setTargetPosition(pos);
-        armLift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        brush.setDirection(CRServo.Direction.REVERSE);
     }
 
     private void moveServo (Servo servo, double rate) {
